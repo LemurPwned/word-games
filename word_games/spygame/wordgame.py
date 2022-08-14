@@ -115,7 +115,7 @@ class WordHierarchyEngine:
 
     def propose_improvement_pairs(self, user_nodes):
         """
-        For user selected words, pick pairs such that their 
+        For user selected words, pick pairs such that their
         similarity is maximal and propose them for improvement.
         """
         ...

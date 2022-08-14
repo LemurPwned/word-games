@@ -1,9 +1,10 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.widgets import Button
-from functools import partial
-from rich.console import Console
 import random
+from functools import partial
+
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
+from rich.console import Console
 
 CRIMSON = (0.8627450980392157, 0.0784313725490196, 0.23529411764705882, 1.0)
 
