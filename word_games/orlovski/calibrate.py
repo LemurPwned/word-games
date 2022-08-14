@@ -1,10 +1,10 @@
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as mpatches
-from matplotlib.colors import Normalize
-from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
+import numpy as np
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
+from matplotlib.widgets import Button, Slider
+from mpl_toolkits.mplot3d import Axes3D
 from rich.console import Console
 
 
