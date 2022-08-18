@@ -41,7 +41,7 @@ class DiodeGameEngine:
             axs[0, i].set_axis_off()
 
         def diode_on(val, diode_id):
-            for k in (-1, 1):
+            for k in (-1, 0, 1):
                 indx = (diode_id + k)
                 if indx < 0 or indx >= self.diodes:
                     continue

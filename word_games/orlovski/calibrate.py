@@ -9,7 +9,7 @@ from rich.console import Console
 
 
 class x3DCalibrateEngine:
-    def __init__(self, grid_size: int = 25, step_size: int = 1) -> None:
+    def __init__(self, grid_size: int = 50, step_size: int = 1) -> None:
         # generate integer 3D space
         self.grid_size = grid_size
         self.step_size = step_size
@@ -17,8 +17,7 @@ class x3DCalibrateEngine:
         self.space = np.dstack([self.space for _ in range(3)])
         self.space = self.space.astype(np.int32)
         self.console = Console()
-        self.target = [np.random.randint(0, self.grid_size) for _ in range(3)]
-        self.pos = [np.random.randint(0, self.grid_size) for _ in range(3)]
+        self.generate_target_position() # fills target and pos
         max_distance = self.compute_distance(
             position=[0, 0, 0], target=[grid_size, grid_size, grid_size])
         self.norm = Normalize(vmin=0, vmax=max_distance)
@@ -34,6 +33,23 @@ class x3DCalibrateEngine:
         self.print(f"Step size: {self.step_size}")
         self.visualise_3D_space()
 
+
+    def generate_target_position(self):
+        min_distance = self.grid_size
+        max_distance = self.grid_size**2
+        distance = np.random.randint(min_distance, max_distance)
+        # generate a target
+        self.target = [np.random.randint(0, self.grid_size) for _ in range(3)]
+        x = np.random.randint(0, self.grid_size)
+        y = np.random.randint(0, self.grid_size)
+        def inverted_distance(d, pos):
+            # d^2 = x^2 + y^2 + z^2
+            # z^2 = d^2 - x^2 - y^2
+            # z = sqrt(d^2 - x^2 - y^2)
+            return np.sqrt(d**2 - pos[0]**2 - pos[1]**2)
+        z = inverted_distance(distance, [x, y])
+        self.pos = [x, y, z]
+
     def is_game_won(self):
         if self.compute_distance(self.pos, self.target) < self.eps:
             return True
@@ -43,10 +59,10 @@ class x3DCalibrateEngine:
         fig, ax = plt.subplots()
         ax = fig.add_subplot(1, 1, 1, projection='3d')
         graph = ax.scatter3D(*self.pos, color="royalblue", s=10)
-        _ = ax.scatter3D(*self.target, color="crimson", s=20)
-        ax.set_xlim(0, 30)
-        ax.set_ylim(0, 30)
-        ax.set_zlim(0, 30)
+        target_graph = ax.scatter3D(*self.target, color="crimson", s=20)
+        ax.set_xlim(0, max(self.grid_size, self.pos[0], self.target[0]))
+        ax.set_ylim(0, max(self.grid_size, self.pos[1], self.target[1]))
+        ax.set_zlim(0, max(self.grid_size, self.pos[2], self.target[2]))
         ax.set_axis_off()
         # adjust the main plot to make room for the sliders
         pi = np.pi
@@ -57,7 +73,7 @@ class x3DCalibrateEngine:
         x = self.eps * sin(phi) * cos(theta) + self.target[0]
         y = self.eps * sin(phi) * sin(theta) + self.target[1]
         z = self.eps * cos(phi) + self.target[2]
-        ax.plot_surface(x,
+        sphere = ax.plot_surface(x,
                         y,
                         z,
                         rstride=2,
@@ -65,6 +81,7 @@ class x3DCalibrateEngine:
                         color='c',
                         alpha=0.1,
                         linewidth=0.1)
+        plots = [sphere] # keep handler
         ax.axis('off')
         fig.subplots_adjust(left=0.25, bottom=0.45)
 
@@ -84,21 +101,21 @@ class x3DCalibrateEngine:
             ax=ax_xpot,
             label='X',
             valmin=0.,
-            valmax=30,
+            valmax=self.grid_size,
             valinit=self.pos[0],
         )
         y_slider = Slider(
             ax=ax_ypot,
             label='Y',
-            valmin=0.1,
-            valmax=30,
+            valmin=0.,
+            valmax=self.grid_size,
             valinit=self.pos[1],
         )
         z_slider = Slider(
             ax=ax_zpot,
             label='Z',
-            valmin=0.1,
-            valmax=30,
+            valmin=0.,
+            valmax=self.grid_size,
             valinit=self.pos[2],
         )
 
@@ -121,8 +138,25 @@ class x3DCalibrateEngine:
         button = Button(resetax, 'Reset', hovercolor='0.975')
 
         def reset(event):
-            for slider in (x_slider, y_slider, z_slider):
+            self.generate_target_position()
+            target_graph._offsets3d = ([self.target[0]], [self.target[1]], [self.target[2]])
+            x = self.eps * sin(phi) * cos(theta) + self.target[0]
+            y = self.eps * sin(phi) * sin(theta) + self.target[1]
+            z = self.eps * cos(phi) + self.target[2]
+            plots[0].remove()
+            plots[0] = ax.plot_surface(x, 
+                                    y, 
+                                    z, 
+                                    rstride=2, 
+                                    cstride=2, 
+                                    color='c', 
+                                    alpha=0.1, 
+                                    linewidth=0.1)
+            for i, slider in enumerate((x_slider, y_slider, z_slider)):
+                slider.valinit = self.pos[i]
                 slider.reset()
+            
+            fig.canvas.draw_idle()
 
         button.on_clicked(reset)
         plt.show()
