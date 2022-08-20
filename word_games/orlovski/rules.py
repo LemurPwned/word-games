@@ -1,22 +1,23 @@
 import random
+import sys
 
+import rich.box
 from rich.panel import Panel
 from textual.app import App
 from textual.reactive import Reactive
 from textual.widget import Widget
 from textual.widgets import Button, ButtonPressed, Static
-from rich.panel import Panel
-import sys 
-import rich.box
+
+
 class Rule:
     def __init__(self, name: str, rule: str, num_false: int = 2) -> None:
         self.name = name
         self.rule = rule
         self.num_false = num_false
         self.description = f'{name}: {rule}'
-    
+
     def __call__(self) -> int:
-        # generate only one true answer 
+        # generate only one true answer
         lst = [self.generate_true(), *[self.generate_false() for _ in range(self.num_false)]]
         correct_ans = lst[0]
         random.shuffle(lst)
@@ -33,7 +34,7 @@ class EvenRule(Rule):
         num = random.randint(0, 9999)
         if num % 2 == 0:
             return num + 1
-        return num 
+        return num
 
 class OddRule(Rule):
     def generate_true(self):
@@ -42,7 +43,7 @@ class OddRule(Rule):
         if num % 2 == 0:
             num += 1
         return num
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 2 == 0:
@@ -55,7 +56,7 @@ class DivisibleBy3Rule(Rule):
         if num % 3 == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 3 == 0:
@@ -68,7 +69,7 @@ class DivisibleBy5Rule(Rule):
         if num % 5 == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 5 == 0:
@@ -81,7 +82,7 @@ class DivisibleBy7Rule(Rule):
         if num % 7 == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 7 == 0:
@@ -94,7 +95,7 @@ class DivisibleBy11Rule(Rule):
         if num % 11 == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 11 == 0:
@@ -107,7 +108,7 @@ class PowerOf2Rule(Rule):
         if num & (num - 1) == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num & (num - 1) == 0:
@@ -120,7 +121,7 @@ class PowerOf3Rule(Rule):
         if num & (num - 1) == 0:
             return num
         return num + 1
-    
+
     def generate_false(self):
         num = random.randint(0, 9999)
         if num & (num - 1) == 0:
@@ -142,7 +143,7 @@ class Hover(Widget):
     def on_leave(self) -> None:
         self.mouse_over = False
 
-    
+
 
 
 class RulesEngine(App):
@@ -162,17 +163,17 @@ class RulesEngine(App):
                  log_verbosity: int = 1,
                  title: str = "Rule Games"):
         super().__init__(screen, driver_class, log, log_verbosity, title)
-        self.ruleset = [EvenRule('Even', 'is even'), 
-        OddRule('Odd', 'is odd'), 
-        DivisibleBy3Rule('Divisible by 3', 'is divisible by 3'), 
-        DivisibleBy5Rule('Divisible by 5', 'is divisible by 5'), 
-        DivisibleBy7Rule('Divisible by 7', 'is divisible by 7'), 
-        DivisibleBy11Rule('Divisible by 11', 'is divisible by 11'), 
-        PowerOf2Rule('Power of 2', 'is power of 2'), 
+        self.ruleset = [EvenRule('Even', 'is even'),
+        OddRule('Odd', 'is odd'),
+        DivisibleBy3Rule('Divisible by 3', 'is divisible by 3'),
+        DivisibleBy5Rule('Divisible by 5', 'is divisible by 5'),
+        DivisibleBy7Rule('Divisible by 7', 'is divisible by 7'),
+        DivisibleBy11Rule('Divisible by 11', 'is divisible by 11'),
+        PowerOf2Rule('Power of 2', 'is power of 2'),
         PowerOf3Rule('Power of 3', 'is power of 3')]
 
         self.current_rule = self.ruleset[0]
-        self.score = 0 
+        self.score = 0
         self.to_collect = 5
 
 
@@ -197,11 +198,11 @@ class RulesEngine(App):
         button_name = message.sender.name
         print("Pressed button:", button_name)
         if button_name == str(self.current_correct_ans):
-            self.score += 1 
+            self.score += 1
         else:
             self.score -= 1
         if self.score == self.to_collect:
-            # reset 
+            # reset
             print("You win")
             sys.exit()
         elif self.score < -self.to_collect:

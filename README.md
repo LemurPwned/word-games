@@ -21,4 +21,4 @@ Various word games to play in the terminal. Also some of the matplotlib interact
 
 * WordHierarchy - a word game to learn to put words in order such that their consecutive meanings converge.
 * DiodeGame - a simple find a pattern game.
-* CalibrateGame - a simple find a point in 3D space game. you only have a linear clue as help. 
+* CalibrateGame - a simple find a point in 3D space game. you only have a linear clue as help.

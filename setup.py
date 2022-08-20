@@ -7,5 +7,5 @@ if __name__ == "__main__":
         author="Alexander Orlovski",
         author_email="orlov@def.inr",
         description="Word games",
-        long_description=open("README.md").read(), 
+        long_description=open("README.md").read(),
     )

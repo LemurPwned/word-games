@@ -144,18 +144,18 @@ class x3DCalibrateEngine:
             y = self.eps * sin(phi) * sin(theta) + self.target[1]
             z = self.eps * cos(phi) + self.target[2]
             plots[0].remove()
-            plots[0] = ax.plot_surface(x, 
-                                    y, 
-                                    z, 
-                                    rstride=2, 
-                                    cstride=2, 
-                                    color='c', 
-                                    alpha=0.1, 
+            plots[0] = ax.plot_surface(x,
+                                    y,
+                                    z,
+                                    rstride=2,
+                                    cstride=2,
+                                    color='c',
+                                    alpha=0.1,
                                     linewidth=0.1)
             for i, slider in enumerate((x_slider, y_slider, z_slider)):
                 slider.valinit = self.pos[i]
                 slider.reset()
-            
+
             fig.canvas.draw_idle()
 
         button.on_clicked(reset)
