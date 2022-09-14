@@ -19,6 +19,13 @@ class DiodeGameEngine:
         self.visualise_game()
 
     def visualise_game(self):
+        def is_game_won():
+            for patch in self.patches:
+                if patch.get_facecolor() == CRIMSON:
+                    return False
+
+            return True
+
         # generate 6 patches in a row for a matplotlib plot
         self.patches = []
         h = w = 20
@@ -49,7 +56,7 @@ class DiodeGameEngine:
                 new_color = 'royalblue' if old_color == CRIMSON else 'crimson'
                 self.patches[indx].set_facecolor(new_color)
             fig.canvas.draw_idle()
-            if self.is_game_won():
+            if is_game_won():
                 self.print("You won!")
                 plt.close()
 
@@ -61,12 +68,52 @@ class DiodeGameEngine:
                 bnext)  # keep the reference counter for the button alive
         plt.show()
 
-    def is_game_won(self):
-        for patch in self.patches:
-            if patch.get_facecolor() == CRIMSON:
-                return False
+    def ipythonwidgets_visual(self):
+        import ipywidgets as ipw
 
-        return True
+        output = ipw.Output(layout={'border': '1px solid black'})
+        with output:
+            buttons = [
+                ipw.Button(
+                    description=f'{i}',
+                    layout=ipw.Layout(width='50px', height='50px', color='gray'),
+                ) for i in range(self.diodes)
+            ]
+            colors = [
+                'blue' if random.random() > 0.5 else 'red' for _ in range(self.diodes)
+            ]
+            diodes =  [
+                ipw.HTML(
+                    f'<div style="background-color: {colors[i]}; width: 50px; height: 50px; border: 1px solid black;"></div>',
+                    layout=ipw.Layout(width='50px', height='50px'),
+                ) for i in range(self.diodes)
+            ]
+            def is_game_won():
+                for color in colors:
+                    if color == 'red':
+                        return False
+                return True
+
+            def diode_on(b):
+                diode_id = int(b.description)
+                for k in (-1, 0, 1):
+                    indx = (diode_id + k)
+                    if indx < 0 or indx >= self.diodes:
+                        continue
+                    old_color = colors[indx]
+                    new_color = 'blue' if old_color == 'red' else 'red'
+                    colors[indx] = new_color
+                    diodes[
+                        indx].value = f'<div style="background-color: {new_color}; width: 50px; height: 50px; border: 1px solid black;"></div>'
+                if is_game_won():
+                    with output:
+                        print("You won!")
+
+            for i in range(self.diodes):
+                buttons[i].on_click(diode_on)
+
+            game_box = ipw.VBox([ipw.HBox(diodes), ipw.HBox(buttons), output])
+            return game_box
 
 
 if __name__ == "__main__":

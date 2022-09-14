@@ -1,5 +1,6 @@
 import random
 import sys
+from turtle import ScrolledCanvas
 
 import rich.box
 from rich.panel import Panel
@@ -144,6 +145,54 @@ class Hover(Widget):
         self.mouse_over = False
 
 
+class RuleGameEngine():
+    def __init__(self, score_to_collect = 5) -> None:
+        self.ruleset = [EvenRule('Even', 'is even'),
+        OddRule('Odd', 'is odd'),
+        DivisibleBy3Rule('Divisible by 3', 'is divisible by 3'),
+        DivisibleBy5Rule('Divisible by 5', 'is divisible by 5'),
+        # DivisibleBy7Rule('Divisible by 7', 'is divisible by 7'),
+        # DivisibleBy11Rule('Divisible by 11', 'is divisible by 11'),
+        PowerOf2Rule('Power of 2', 'is power of 2'),
+        PowerOf3Rule('Power of 3', 'is power of 3')]
+
+        self.current_rule = random.choice(self.ruleset)
+        self.current_rule = self.ruleset[0]
+        self.score = 0
+        self.to_collect = score_to_collect
+
+    def ipythonwidgets_visual(self):
+        import ipywidgets as ipw
+
+
+        out = ipw.Output()
+        score_tab = ipw.HTML(value=f'<div>Score: {self.score}/{self.to_collect}</div>')
+        lst, self.current_correct_ans = self.current_rule()
+        buttons = [ipw.Button(description=str(i)) for i in lst]
+
+        def on_button_clicked(b):
+            if int(b.description) == self.current_correct_ans:
+                self.score += 1
+                score_tab.value = f'<div>Score: {self.score}/{self.to_collect}</div>'
+            else:
+                self.score -= 1
+                score_tab.value = f'<div>Score: {self.score}/{self.to_collect}</div>'
+
+            if self.score == self.to_collect:
+                self.score = 0
+                with out:
+                    print("You won!")
+
+            lst, self.current_correct_ans = self.current_rule()
+            for i, but in enumerate(buttons):
+                but.description = str(lst[i])
+
+        for i, button in enumerate(buttons):
+            button.on_click(on_button_clicked)
+
+        return ipw.VBox([score_tab, ipw.HBox(buttons), out])
+
+
 
 
 class RulesEngine(App):
@@ -167,12 +216,13 @@ class RulesEngine(App):
         OddRule('Odd', 'is odd'),
         DivisibleBy3Rule('Divisible by 3', 'is divisible by 3'),
         DivisibleBy5Rule('Divisible by 5', 'is divisible by 5'),
-        DivisibleBy7Rule('Divisible by 7', 'is divisible by 7'),
-        DivisibleBy11Rule('Divisible by 11', 'is divisible by 11'),
+        # DivisibleBy7Rule('Divisible by 7', 'is divisible by 7'),
+        # DivisibleBy11Rule('Divisible by 11', 'is divisible by 11'),
         PowerOf2Rule('Power of 2', 'is power of 2'),
         PowerOf3Rule('Power of 3', 'is power of 3')]
 
-        self.current_rule = self.ruleset[0]
+        # self.current_rule = self.ruleset[0]
+        self.current_rule = random.choice(self.ruleset)
         self.score = 0
         self.to_collect = 5
 
