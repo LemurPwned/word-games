@@ -4,25 +4,25 @@ import numpy as np
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 from matplotlib.widgets import Button, Slider
-from mpl_toolkits.mplot3d import Axes3D
 from rich.console import Console
 
 
 class x3DCalibrateEngine:
-    def __init__(self, grid_size: int = 50, step_size: int = 1) -> None:
+    def __init__(self, grid_size: int = 50, step_size: int = 1, eps=0.1, hide_hint=True) -> None:
         # generate integer 3D space
         self.grid_size = grid_size
         self.step_size = step_size
+        self.eps = eps
+        self.hide_hint = hide_hint
         self.space = np.arange(0, grid_size, step_size)
         self.space = np.dstack([self.space for _ in range(3)])
         self.space = self.space.astype(np.int32)
         self.console = Console()
         self.generate_target_position() # fills target and pos
-        max_distance = self.compute_distance(
+        self.max_distance = self.compute_distance(
             position=[0, 0, 0], target=[grid_size, grid_size, grid_size])
-        self.norm = Normalize(vmin=0, vmax=max_distance)
+        self.norm = Normalize(vmin=0, vmax=self.max_distance)
         self.sm = ScalarMappable(norm=self.norm, cmap='inferno')
-        self.eps = 6
         self.print = self.console.print
 
     def compute_distance(self, position, target):
@@ -33,6 +33,14 @@ class x3DCalibrateEngine:
         self.print(f"Step size: {self.step_size}")
         self.visualise_3D_space()
 
+    def ipythonwidgets_visual(self):
+        from ipywidgets import interact
+        def f(x, y, z):
+            self.pos = [x, y, z]
+            if self.is_game_won():
+                print("Game won!")
+            self.visualise_3D_space()
+        interact(f, x=(0, self.grid_size, self.step_size), y=(0, self.grid_size, self.step_size), z=(0, self.grid_size, self.step_size))
 
     def generate_target_position(self):
         min_distance = self.grid_size
@@ -51,29 +59,34 @@ class x3DCalibrateEngine:
         self.pos = [x, y, z]
 
     def is_game_won(self):
-        if self.compute_distance(self.pos, self.target) < self.eps:
+        if self.compute_distance(self.pos, self.target) <= self.eps:
             return True
         return False
 
     def visualise_3D_space(self) -> None:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=300)
         ax = fig.add_subplot(1, 1, 1, projection='3d')
         graph = ax.scatter3D(*self.pos, color="royalblue", s=10)
-        target_graph = ax.scatter3D(*self.target, color="crimson", s=20)
-        ax.set_xlim(0, max(self.grid_size, self.pos[0], self.target[0]))
-        ax.set_ylim(0, max(self.grid_size, self.pos[1], self.target[1]))
-        ax.set_zlim(0, max(self.grid_size, self.pos[2], self.target[2]))
+
+
         ax.set_axis_off()
-        # adjust the main plot to make room for the sliders
-        pi = np.pi
-        cos = np.cos
-        sin = np.sin
-        phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0 * pi:100j]
-        # draw epsilon ball
-        x = self.eps * sin(phi) * cos(theta) + self.target[0]
-        y = self.eps * sin(phi) * sin(theta) + self.target[1]
-        z = self.eps * cos(phi) + self.target[2]
-        sphere = ax.plot_surface(x,
+        plots = []
+        if not self.hide_hint:
+            # adjust the main plot to make room for the sliders
+            pi = np.pi
+            cos = np.cos
+            sin = np.sin
+            phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0 * pi:100j]
+            # draw epsilon ball
+            x = self.eps * sin(phi) * cos(theta) + self.target[0]
+            y = self.eps * sin(phi) * sin(theta) + self.target[1]
+            z = self.eps * cos(phi) + self.target[2]
+            ax.set_xlim(0, max(self.grid_size, self.pos[0], self.target[0]))
+            ax.set_ylim(0, max(self.grid_size, self.pos[1], self.target[1]))
+            ax.set_zlim(0, max(self.grid_size, self.pos[2], self.target[2]))
+
+            target_graph = ax.scatter3D(*self.target, color="crimson", s=20)
+            sphere = ax.plot_surface(x,
                         y,
                         z,
                         rstride=2,
@@ -81,7 +94,7 @@ class x3DCalibrateEngine:
                         color='c',
                         alpha=0.1,
                         linewidth=0.1)
-        plots = [sphere] # keep handler
+            plots = [sphere] # keep handler
         ax.axis('off')
         fig.subplots_adjust(left=0.25, bottom=0.45)
 
@@ -96,7 +109,7 @@ class x3DCalibrateEngine:
         rect = mpatches.Rectangle([0, 0], width=10, height=10)
         ax_indicator.add_artist(rect)
         dist = self.compute_distance(self.pos, self.target)
-        rect.set_facecolor(self.sm.to_rgba(dist))
+        rect.set_facecolor(self.sm.to_rgba(self.max_distance-dist))
         x_slider = Slider(
             ax=ax_xpot,
             label='X',
@@ -118,14 +131,14 @@ class x3DCalibrateEngine:
             valmax=self.grid_size,
             valinit=self.pos[2],
         )
-
         # The function to be called anytime a slider's value changes
         def update(val):
             self.pos = (x_slider.val, y_slider.val, z_slider.val)
             if self.is_game_won():
-                self.print("Game won!")
+                fig.clear()
+                print("Game won!")
             dist = self.compute_distance(self.pos, self.target)
-            rect.set_facecolor(self.sm.to_rgba(dist))
+            rect.set_facecolor(self.sm.to_rgba(self.max_distance-dist))
             graph._offsets3d = ([x_slider.val], [y_slider.val], [z_slider.val])
             fig.canvas.draw_idle()
 
@@ -143,15 +156,16 @@ class x3DCalibrateEngine:
             x = self.eps * sin(phi) * cos(theta) + self.target[0]
             y = self.eps * sin(phi) * sin(theta) + self.target[1]
             z = self.eps * cos(phi) + self.target[2]
-            plots[0].remove()
-            plots[0] = ax.plot_surface(x,
-                                    y,
-                                    z,
-                                    rstride=2,
-                                    cstride=2,
-                                    color='c',
-                                    alpha=0.1,
-                                    linewidth=0.1)
+            if not self.hide_hint:
+                plots[0].remove()
+                plots[0] = ax.plot_surface(x,
+                                        y,
+                                        z,
+                                        rstride=2,
+                                        cstride=2,
+                                        color='c',
+                                        alpha=0.1,
+                                        linewidth=0.1)
             for i, slider in enumerate((x_slider, y_slider, z_slider)):
                 slider.valinit = self.pos[i]
                 slider.reset()
