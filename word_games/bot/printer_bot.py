@@ -5,6 +5,7 @@ import re
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from .sp2400python import *
 
 load_dotenv()
 
@@ -12,6 +13,21 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.DEBUG
 )
+
+
+printer = sp2400python("COM3")
+
+fonts = {
+    "NLQ": printer.FONT_NLQ,
+    "SANS SERIF": printer.FONT_SANS_SERIF,
+    "COURIER": printer.FONT_COURIER,
+    "PRESTIGE": printer.FONT_PRESTIGE,
+    "SCRIPT": printer.FONT_SCRIPT,
+    "GOTHIC": printer.FONT_GOTHIC
+}
+
+printer.sendCommand(printer.QUALITY_NLQ)
+printer.setFont(fonts["SANS SERIF"])
 
 builder = Application.builder()
 builder.token(os.environ['TOKEN']).build()
@@ -46,7 +62,7 @@ async def cmd_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text("Wysłano polecenie: " + user_says)
     # todo drukarka i inne rzeczy
-
+    printer.printLine(user_says)
 
 
 application.add_handler(CommandHandler("start", start_callback))
