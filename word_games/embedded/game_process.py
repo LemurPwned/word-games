@@ -1,19 +1,18 @@
 import json
 import math
 import random
-from asyncio.log import logger
 
 import numpy as np
 
-from ..orlovski.rules import DivisibleBy5Rule, EvenRule, OddRule
+from ..orlovski.rules import DivisibleBy5Rule, EvenRule, OddRule, PowerOf2Rule
 from .interface import MessageInterface
 from .utils import logger_config
 
 logger = logger_config()
 
 class GameInterface:
-    def __init__(self) -> None:
-        self.message_interface = MessageInterface(port="/dev/ttyUSB0",
+    def __init__(self, port) -> None:
+        self.message_interface = MessageInterface(port=port,
         baud_rate=9600,
         read_interval=0.05)
 
@@ -31,8 +30,8 @@ class GameInterface:
         raise NotImplementedError
 
 class CalibrateInterface(GameInterface):
-    def __init__(self, grid_size= 30, step_size=  0.5, eps=0.1) -> None:
-        super().__init__()
+    def __init__(self, port, grid_size= 30, step_size=  0.5, eps=0.1) -> None:
+        super().__init__(port)
         self.eps = eps
         self.max_distance = self.compute_distance(
             position=[0, 0, 0], target=[grid_size, grid_size, grid_size])
@@ -74,16 +73,16 @@ class CalibrateInterface(GameInterface):
             self.message_interface.send(json.dumps({
                 "win": True,
                 "progress": 1,
-                "postion": pos,
-                "target": self.target
+                # "postion": pos,
+                # "target": self.target
             }))
             self.on_win()
         else:
             self.message_interface.send(json.dumps({
                 "win": False,
                 "progress": self.progress_bar(distance),
-                "position": pos,
-                "target": self.target
+                # "position": pos,
+                # "target": self.target
 
             }))
 
@@ -100,13 +99,18 @@ class CalibrateInterface(GameInterface):
 
 
 class DiodeInterface(GameInterface):
-    def __init__(self, diodes, bias) -> None:
-        super().__init__()
+    def __init__(self, port, diodes, bias=0.35) -> None:
+        super().__init__(port)
         self.diodes = diodes
-        self.bias = 0.35
+        self.bias = bias
 
     def on_win(self):
-        ...
+        self.message_interface.send(json.dumps(
+            {
+                "win": True,
+                "diodes": self.diodes
+            }
+        ))
 
     def generate_diode_states(self):
         diode_states = []
@@ -119,7 +123,6 @@ class DiodeInterface(GameInterface):
         return diode_states
 
     def on_init(self):
-
         diode_states = self.generate_diode_states()
         while all(diode_states):
             diode_states = self.generate_diode_states()
@@ -141,12 +144,6 @@ class DiodeInterface(GameInterface):
                 diode_states[diode_id] = (not diode_states[diode_id])
 
         if all(diode_states):
-            self.message_interface.send(json.dumps(
-                {
-                    "win": True,
-                    "diodes": diode_states
-                }
-            ))
             self.on_win()
         else:
             # change diodes adequately
@@ -158,19 +155,31 @@ class DiodeInterface(GameInterface):
             ))
 
 
-class RuleInferface:
-    def __init__(self) -> None:
+class RuleInferface(GameInterface):
+    def __init__(self, port) -> None:
+        super().__init__(port)
         self.score = 0
+        self.max_score = 10
 
     def on_init(self):
         # initialise Rule
         self.current_rule = random.choice(
-            (EvenRule(), OddRule(), DivisibleBy5Rule())
+            (EvenRule(), OddRule(), DivisibleBy5Rule(), PowerOf2Rule())
         )
         self.lst, self.correct = self.current_rule()
         self.message_interface.send(json.dumps(
             {
                 "win": False,
+                "numbers": self.lst,
+                "correct": self.correct,
+                "score": self.score
+            }
+        ))
+
+    def on_win(self):
+        self.message_interface.send(json.dumps(
+            {
+                "win": True,
                 "numbers": self.lst,
                 "correct": self.correct,
                 "score": self.score
@@ -183,7 +192,7 @@ class RuleInferface:
         answ = message['answer']
         if answ == self.correct:
             self.score += 1
-        if self.score >= 10:
+        if self.score >= self.max_score:
             self.on_win()
         else:
             self.lst, self.correct = self.current_rule()

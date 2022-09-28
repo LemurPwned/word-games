@@ -4,9 +4,9 @@ from multiprocessing import Queue
 import serial
 
 
-class MessageInferface:
+class MessageInterface:
     """Base class for message interface"""
-    def __init__(self, port: str, baud_rate: int, read_interval: float = 0.05,  shared_queue: Queue = None) -> None:
+    def __init__(self, port: str, baud_rate: int = 9600, read_interval: float = 0.05,  shared_queue: Queue = None) -> None:
         """
         Initialize serial port and queue
         :param port: serial port
@@ -17,7 +17,7 @@ class MessageInferface:
         self.port = port
         self.baud_rate = baud_rate
         self.read_interval = read_interval
-        self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=1)
+        self.serial = serial.Serial(port=port, baudrate=baud_rate, write_timeout=0.1,  timeout=0.1)
         if shared_queue is None:
             self.shared_queue = Queue()
         else:

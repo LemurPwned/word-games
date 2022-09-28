@@ -1,5 +1,6 @@
 import serial
 
+
 class sp2400python:
     # 40
     INITIALIZE = [0x1B, 0x40]
