@@ -6,7 +6,7 @@ import serial
 
 class MessageInterface:
     """Base class for message interface"""
-    def __init__(self, port: str, baud_rate: int = 9600, read_interval: float = 0.05,  shared_queue: Queue = None) -> None:
+    def __init__(self, port: str, baud_rate: int = 115200, read_interval: float = 0.05,  shared_queue: Queue = None) -> None:
         """
         Initialize serial port and queue
         :param port: serial port
@@ -17,7 +17,7 @@ class MessageInterface:
         self.port = port
         self.baud_rate = baud_rate
         self.read_interval = read_interval
-        self.serial = serial.Serial(port=port, baudrate=baud_rate, write_timeout=0.1,  timeout=0.1)
+        self.serial = serial.Serial(port=port, baudrate=baud_rate, write_timeout=1,  timeout=0.1)
         if shared_queue is None:
             self.shared_queue = Queue()
         else:
@@ -30,7 +30,7 @@ class MessageInterface:
         Read from serial port and put messages in queue
         """
         while True:
-            data = self.serial.readline()
+            data = self.serial.readlines()
             time.sleep(self.read_interval)
             if data:
                 action_on_message(data)
@@ -41,4 +41,4 @@ class MessageInterface:
         """
         Send message to serial port
         """
-        self.serial.write(message)
+        self.serial.write(str.encode(message))
