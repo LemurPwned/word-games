@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from .sp2400python import *
-
 load_dotenv()
 
 logging.basicConfig(
@@ -14,9 +13,8 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
-
-printer = sp2400python("COM3")
-
+port = 5
+printer = sp2400python(f"/dev/ttyS{port}")
 fonts = {
     "NLQ": printer.FONT_NLQ,
     "SANS SERIF": printer.FONT_SANS_SERIF,
@@ -28,6 +26,10 @@ fonts = {
 
 printer.sendCommand(printer.QUALITY_NLQ)
 printer.setFont(fonts["SANS SERIF"])
+
+logging.info(f"Setting port {port}")
+        
+
 
 builder = Application.builder()
 builder.token(os.environ['TOKEN']).build()

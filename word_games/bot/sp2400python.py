@@ -92,3 +92,21 @@ class sp2400python:
 
     def __del__(self):
         self.ser.close()
+
+if __name__ == "__main__":
+    port = 5
+    printer = sp2400python(f"/dev/ttyS{port}")
+
+    fonts = {
+        "NLQ": printer.FONT_NLQ,
+        "SANS SERIF": printer.FONT_SANS_SERIF,
+        "COURIER": printer.FONT_COURIER,
+        "PRESTIGE": printer.FONT_PRESTIGE,
+        "SCRIPT": printer.FONT_SCRIPT,
+        "GOTHIC": printer.FONT_GOTHIC
+    }
+
+    printer.sendCommand(printer.QUALITY_NLQ)
+    for key in fonts:
+        printer.setFont(fonts[key])
+        printer.printLine("Font demo of: " + key)
