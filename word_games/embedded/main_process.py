@@ -1,4 +1,4 @@
-from .game_process import GameInterface
+from .game_process import GameInterface, DiodeInterface
 from .utils import logger_config
 import random 
 import dotenv 
@@ -40,25 +40,22 @@ class Orlowski(GameInterface):
             # pick a random 
             game_no = random.randint(0, 2)
             logger.info(f"Game {game_no} launched")
-
-            # self.process = DiodeInterface()
+            port = '/dev/ttyACM1'
+            br = 9600
+            process = DiodeInterface(
+                port=port, baud_rate=br
+            )
+            self.launch_process(process)
             # self.process.run()
-        # if game_no == 1:
-        #     self.calibrate_process = CalibrateInterface()
-        #     self.calibrate_process.run()
-        # elif game_no == 2:
-        #     self.diode_process = DiodeInterface()
-        #     self.diode_process.run()
-        # else:
-        #     self.rule_process = RuleInterface()
-        #     self.rule_process.run()
 
-    
+
+    def launch_process(self, process):
+        import multiprocessing as mp 
+        p = mp.Process(
+            target=process.run
+        )
+        p.run()
+        p.join()
 
     def on_init(self):
         logger.info("Initialisig listening")
-        self.message_interface.send(json.dumps(
-            {
-                "win": False,
-            }
-        ))

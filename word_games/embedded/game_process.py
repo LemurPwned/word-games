@@ -165,7 +165,7 @@ class DiodeInterface(GameInterface):
                 if diode_id > 0 and diode_id < len(self.diode_states):
                     self.diode_states[diode_id] = (not self.diode_states[diode_id])
         logger.debug(f"DIODE STATES {self.diode_states}")
-        if not all(self.diode_states):
+        if not any(self.diode_states):
             self.on_win()
         else:
             # change diodes adequately
