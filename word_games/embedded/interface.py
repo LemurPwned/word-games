@@ -1,8 +1,9 @@
 import time
 from multiprocessing import Queue
-
+from .utils import logger_config
 import serial
 
+logger = logger_config()
 
 class MessageInterface:
     """Base class for message interface"""
@@ -31,9 +32,12 @@ class MessageInterface:
         """
         while True:
             data = self.serial.readlines()
-            time.sleep(self.read_interval)
+            # time.sleep(self.read_interval)
+            logger.debug(data)
             if data:
-                action_on_message(data)
+                for data_chunk in data:
+                    logger.debug(f"Chunk : {data_chunk}")
+                    action_on_message(data_chunk.decode("utf-8"))
                 # self.shared_queue.put(data)
 
 

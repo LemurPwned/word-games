@@ -16,22 +16,22 @@
 #define DIO_B 6
 #define DIO_C 4
 
-#define BTN_A 6
-#define BTN_B 7
-#define BTN_C 8
-
 ezButton btns[] = {
-    ezButton(4),
-    ezButton(3),
     ezButton(2),
+    ezButton(14),
+    ezButton(15),
 };
 int btnStates[3] = {0, 0, 0};
 
 // led strip
-#define PIN 12
-#define NUMPIXELS 11
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define TEST_DELAY 2000
+#define PIN_A 10
+#define PIN_B 11
+#define PIN_C 12
+#define NUMPIXELS 10
+Adafruit_NeoPixel pixelsA(NUMPIXELS, PIN_A, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixelsB(NUMPIXELS, PIN_B, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixelsC(NUMPIXELS, PIN_C, NEO_GRB + NEO_KHZ800);
+#define TEST_DELAY 200
 
 const uint8_t SEG_DONE[] = {
     SEG_B | SEG_C | SEG_D | SEG_E | SEG_G,         // d
@@ -65,13 +65,13 @@ void readBtns()
 
 void setup()
 {
-    pixels.begin();
-    pixels.setBrightness(10);
-    for (int i = 0; i < NUMPIXELS; i++)
-    {
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-    }
-    pixels.show();
+    Serial.begin(9600);
+    while (!Serial)
+        continue;
+    pixelsA.begin();
+    pixelsB.begin();
+    pixelsC.begin();
+
     uint8_t data[] = {0xff, 0xff, 0xff, 0xff};
     displayA.setBrightness(0x0f);
     displayB.setBrightness(0x0f);
@@ -79,12 +79,8 @@ void setup()
     displayA.setSegments(data);
     displayB.setSegments(data);
     displayC.setSegments(data);
-
-    pinMode(BTN_A, INPUT);
-    pinMode(BTN_B, INPUT);
-    pinMode(BTN_C, INPUT);
-
-    setProgress(0);
+    
+    setProgress(15);
     displayNumber(10, displayA);
     displayNumber(892, displayB);
     displayNumber(2731, displayC);
@@ -93,16 +89,13 @@ void setup()
     {
         btns[i].setDebounceTime(50);
     }
-    Serial.begin(9600);
-    while (!Serial)
-        continue;
+
 }
 
 void displayNumber(int number, TM1637Display display)
 {
     // leading zero is set to false
     display.showNumberDec(number, false);
-    delay(TEST_DELAY);
 }
 
 void readJson(StaticJsonDocument<200> doc)
@@ -114,9 +107,8 @@ void readJson(StaticJsonDocument<200> doc)
     score = doc["score"];
     if (!win)
     {
-
         displayNumber(numberA, displayA);
-        displayNumber(numberB, displayB);
+        displayNumber(numberA, displayB);
         displayNumber(numberC, displayC);
     }
     else
@@ -125,110 +117,87 @@ void readJson(StaticJsonDocument<200> doc)
         displayB.setSegments(SEG_DONE);
         displayC.setSegments(SEG_DONE);
     }
+    setProgress(score);
 }
 
-void readButtonPress()
-{
-    btnStateA = digitalRead(BTN_A);
-    btnStateB = digitalRead(BTN_B);
-    btnStateC = digitalRead(BTN_C);
-    while (
-        btnStateA == HIGH &&
-        btnStateB == HIGH &&
-        btnStateC == HIGH)
-    {
-        btnStateA = digitalRead(BTN_A);
-        btnStateB = digitalRead(BTN_B);
-        btnStateC = digitalRead(BTN_C);
-    }
-}
 
 void setProgress(int progress)
 {
-
-    for (int i = 0; i < NUMPIXELS; i++)
-    {
+  pixelsA.clear();
+  pixelsB.clear();
+  pixelsC.clear();
+    for (int i = 0; i < NUMPIXELS; i++ ){
         if (i < progress)
-        {
-            pixels.setPixelColor(i, pixels.Color(255, 255, 255));
-        }
+            pixelsA.setPixelColor(i, pixelsA.Color(0, 255, 0));
         else
+            pixelsA.setPixelColor(i, pixelsA.Color(255, 0, 0));
+    }
+    pixelsA.show();
+    int secondProgress = progress - 10;
+    for (int i = 0; i < NUMPIXELS; i++ ){
+        if (i < secondProgress)
+            pixelsB.setPixelColor(i, pixelsB.Color(0, 255, 0));
+        else
+            pixelsB.setPixelColor(i, pixelsB.Color(255, 0, 0));
+    }
+    pixelsB.show();
+    int thirdProgress = progress - 20;
+    for (int i = 0; i < NUMPIXELS; i++ ){
+        if (i < thirdProgress)
+            pixelsC.setPixelColor(i, pixelsC.Color(0, 255, 0));
+        else
+            pixelsC.setPixelColor(i, pixelsC.Color(255, 0, 0));
+    }
+    pixelsC.show();  
+    // Serial.println("#START");
+    // Serial.println(secondProgress);
+    // Serial.println(thirdProgress);
+    // Serial.println("#END");
+}
+
+
+void sendJson(int state)
+{
+    StaticJsonDocument<100> doc;
+    doc["ans"] = state;
+    serializeJson(doc, Serial);
+}
+
+
+void readSerial(){
+    if (Serial.available() > 0)
+    {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, Serial);
+        if (error)
         {
-            pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.c_str());
+            return;
         }
+        readJson(doc);    
     }
-    pixels.show();
-}
-
-void sendAnswer(int btnStateA, int btnStateB, int btnStateC)
-{
-    StaticJsonDocument<200> doc;
-    if (btnStateA == LOW)
-    {
-        doc["answer"] = numberA;
-    }
-    else if (btnStateB == LOW)
-    {
-        doc["answer"] = numberB;
-    }
-    else if (btnStateC == LOW)
-    {
-        doc["answer"] = numberC;
-    }
-    serializeJsonPretty(doc, Serial);
-}
-
-void sendJson()
-{
-    StaticJsonDocument<200> doc;
-    JsonArray data = doc.createNestedArray("btns");
-    for (int i = 0; i < 3; i++)
-    {
-        data.add(btnStates[i]);
-    }
-    serializeJsonPretty(doc, Serial);
 }
 
 void loop()
 {
-    for (byte i = 0; i < 3; i++)
-        btns[i].loop(); // MUST call the loop() function first
+  // for (int i = 0; i < 30; i++){
+  //   setProgress(i);
+  //   delay(1500);
+  //   Serial.println(i);
+  // }
+  readSerial();
+  delay(TEST_DELAY);
+  for (byte i = 0; i < 3; i++)
+    btns[i].loop(); // MUST call the loop() function first
 
-
-    readBtns();
-    sendJson();
-    delay(1000);
-
-    // pixels.begin();
-    // pixels.setBrightness(10);
-    // for (int i = 0; i < NUMPIXELS; i++)
-    // {
-    //     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
-    // }
-    // pixels.show();
-    // delay(TEST_DELAY);
-
-
-    // if (Serial.available() > 0)
-    // {
-    //     StaticJsonDocument<200> doc;
-    //     DeserializationError error = deserializeJson(doc, Serial);
-    //     if (error)
-    //     {
-    //         Serial.print(F("deserializeJson() failed: "));
-    //         Serial.println(error.c_str());
-    //         return;
-    //     }
-    //     readJson(doc);
-    //     setProgress(score);
-    //     if (win)
-    //     {
-    //         break;
-    //     }
-
-    //     // wait for the button press
-    //     readButtonPress();
-    //     // send the answer
-    //     sendAnswer(btnStateA, btnStateB, btnStateC);
-    // }
+  for (byte i = 0; i < 3; i++){
+    if (btns[i].isPressed()){
+      // Serial.print(i);
+      // Serial.print("is pressed\n");      
+      sendJson(i);
+      delay(TEST_DELAY);
+    }
+  }
 }
+    

@@ -3,11 +3,9 @@ import random
 
 
 class Rule:
-    def __init__(self, name: str, rule: str, num_false: int = 2) -> None:
-        self.name = name
-        self.rule = rule
+    def __init__(self, num_false: int = 2) -> None:
         self.num_false = num_false
-        self.description = f'{name}: {rule}'
+        # self.description = f'{name}: {rule}'
 
     def __call__(self) -> int:
         # generate only one true answer
@@ -41,8 +39,8 @@ class OddRule(Rule):
     def generate_false(self):
         num = random.randint(0, 9999)
         if num % 2 == 0:
-            num -= 1
-        return num
+            return num
+        return max(num -1, 0)
 
 class DivisibleBy3Rule(Rule):
     def generate_true(self):

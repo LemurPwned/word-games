@@ -1,7 +1,8 @@
+from curses.panel import top_panel
 import logging
 import os
 import re
-
+import uuid
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -30,12 +31,12 @@ printer.setFont(fonts["SANS SERIF"])
 
 logging.info(f"Setting port {port}")
         
-
+CONST_SPACE = "\n\n\n\n\n\n\n\n\n\n\n\n"
 
 builder = Application.builder()
 builder.token(os.environ['TOKEN']).build()
 application = builder.build()
-
+counter = 1 
 def escape_markdown( text):
     """
     Helper function to escape telegram markup symbols
@@ -44,6 +45,27 @@ def escape_markdown( text):
     escape_chars = '\[()+-.!~>=|'
     return re.sub(r'([%s])' % escape_chars, r'\\\1', text)
 
+"""
+Polecenie ma byc wysylane z komputera, 
+Polecenie i: 
+licznik z komputera. 
+"""
+
+async def wynik_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_says = " ".join(context.args)  
+    nr, user_says = user_says.split(":")
+    if not user_says:
+        await update.message.reply_text(escape_markdown(r"Wpisz komendę: `/wynik Nr: tresc wartosci`"),
+        parse_mode='MarkdownV2')
+        return
+    await update.message.reply_text("Wysłano polecenie: " + user_says)
+    # todo drukarka i inne rzeczy
+    # nr = 10 
+    tuuid = uuid.uuid4()
+    to_print = f"Przetwarzanie polecenia nr {nr} zakonczone.\n\n"f"Kod odpowiedzi: ({tuuid})\n\n""Wartosc na wyjsciu modulu kognitywnego:\n"
+    to_print += user_says + CONST_SPACE
+
+    printer.printLine(to_print)
 
 async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -63,10 +85,10 @@ async def cmd_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(escape_markdown(r"Wpisz komendę: `/cmd Treść`"),
         parse_mode='MarkdownV2')
         return
-    await update.message.reply_text("Wysłano polecenie: " + user_says)
+    await update.message.reply_text("Wysłano polecenie: " + user_says + CONST_SPACE)
     # todo drukarka i inne rzeczy
-    printer.printLine(user_says)
+    printer.printLine(user_says + CONST_SPACE)
 
-
+application.add_handler(CommandHandler("wynik", wynik_callback))
 application.add_handler(CommandHandler("start", start_callback))
 application.add_handler(CommandHandler("cmd", cmd_callback))
