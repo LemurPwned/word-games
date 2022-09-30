@@ -1,27 +1,44 @@
 #include <ezButton.h>
-
+#include <ArduinoJson.h>
+#include <Arduino.h>
 #define DIODE_OUT A0
 #define KEY_IN A1
 #define RELAY_OUT 5
+#define BTN 12
+
 int key;
 int dbCount = 0;
+int state = 0;
 void setup()
 {
     // put your setup code here, to run once:
     pinMode(DIODE_OUT, OUTPUT);
-    pinMode(KEY_IN, INPUT);
+    pinMode(KEY_IN, INPUT_PULLUP);
     pinMode(RELAY_OUT, OUTPUT);
+    pinMode(BTN, INPUT_PULLUP);
+    digitalWrite(RELAY_OUT, HIGH);
+    
     Serial.begin(9600);
+    while (!Serial)
+        continue;
 }
 // poziomo wyłączone
+
+void sendInit(int state)
+{
+    StaticJsonDocument<200> doc;
+    doc["init"] = state;
+    serializeJson(doc, Serial);
+}
+
+
 
 void loop()
 {
     // put your main code here, to run repeatedly:
     //  digitalWrite(RELAY_OUT, HIGH);
-    key = analogRead(KEY_IN);
-    Serial.println(key);
-    if (key > 1000)
+    key = digitalRead(BTN);
+    if (!digitalRead(KEY_IN))
     {
         dbCount += 1;
         if (dbCount > 100)
@@ -34,15 +51,22 @@ void loop()
         dbCount = 0;
     }
 
-    if (dbCount > 10)
+    if (dbCount > 5)
     {
         analogWrite(DIODE_OUT, 1024);
-        digitalWrite(RELAY_OUT, LOW);
+        if (!state)
+          sendInit(1);
+        // digitalWrite(RELAY_OUT, LOW);
+        state = 1;
     }
     else
     {
+
         delay(100);
         analogWrite(DIODE_OUT, 0);
-        digitalWrite(RELAY_OUT, HIGH);
+        if (state)
+          sendInit(0);
+        // digitalWrite(RELAY_OUT, HIGH);
+        state = 0;
     }
 }

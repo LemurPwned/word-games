@@ -177,12 +177,12 @@ class DiodeInterface(GameInterface):
             ))
 
 
-class RuleInferface(GameInterface):
+class RuleInterface(GameInterface):
     def __init__(self, port, baud_rate) -> None:
         super().__init__(port, baud_rate=baud_rate)
         self.score = 0
-        self.min_score = 3
-        self.max_attempts = 5
+        self.min_score = 15
+        self.max_attempts = 30
         self.attempts = 0
 
 

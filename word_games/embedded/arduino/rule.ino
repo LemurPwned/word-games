@@ -31,7 +31,7 @@ int btnStates[3] = {0, 0, 0};
 Adafruit_NeoPixel pixelsA(NUMPIXELS, PIN_A, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixelsB(NUMPIXELS, PIN_B, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixelsC(NUMPIXELS, PIN_C, NEO_GRB + NEO_KHZ800);
-#define TEST_DELAY 200
+#define TEST_DELAY 5
 
 const uint8_t SEG_DONE[] = {
     SEG_B | SEG_C | SEG_D | SEG_E | SEG_G,         // d
@@ -108,16 +108,39 @@ void readJson(StaticJsonDocument<200> doc)
     if (!win)
     {
         displayNumber(numberA, displayA);
-        displayNumber(numberA, displayB);
+        displayNumber(numberB, displayB);
         displayNumber(numberC, displayC);
+        setProgress(score);
     }
     else
     {
         displayA.setSegments(SEG_DONE);
         displayB.setSegments(SEG_DONE);
         displayC.setSegments(SEG_DONE);
+        if (score < 15){
+          // fail 
+            for (int i =0; i < NUMPIXELS; i ++){
+              pixelsA.setPixelColor(i, pixelsA.Color(255, 0, 0));     
+              pixelsB.setPixelColor(i, pixelsB.Color(255, 0, 0));     
+              pixelsC.setPixelColor(i, pixelsC.Color(255, 0, 0));             
+              pixelsA.show();
+              pixelsB.show();
+              pixelsC.show();
+              delay(50);
+            }
+          
+        } else {
+            for (int i =0; i < NUMPIXELS; i ++){
+              pixelsA.setPixelColor(i, pixelsA.Color(0, 255, 0));     
+              pixelsB.setPixelColor(i, pixelsB.Color(0, 255, 0));     
+              pixelsC.setPixelColor(i, pixelsC.Color(0, 255, 0)); 
+              pixelsA.show();
+              pixelsB.show();
+              pixelsC.show();            
+              delay(50);
+            }
+        }
     }
-    setProgress(score);
 }
 
 
@@ -171,9 +194,9 @@ void readSerial(){
         DeserializationError error = deserializeJson(doc, Serial);
         if (error)
         {
-            Serial.print(F("deserializeJson() failed: "));
-            Serial.println(error.c_str());
-            return;
+            // Serial.print(F("deserializeJson() failed: "));
+            // Serial.println(error.c_str());
+            // return;
         }
         readJson(doc);    
     }
@@ -200,4 +223,3 @@ void loop()
     }
   }
 }
-    

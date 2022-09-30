@@ -1,8 +1,5 @@
 #include <ezButton.h>
 #include <Adafruit_NeoPixel.h>
-#ifdef __AVR__
-#include <avr/power.h> // Required for 16 MHz Adafruit Trinket
-#endif
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
@@ -13,43 +10,56 @@
 
 // led strip
 #define PIN 6
-#define NUMPIXELS 6
+#define NUMPIXELS 11
+#define TEST_DELAY 150
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 bool win = false;
 
 int diodeStates[] = {0, 0, 0, 0, 0, 0};
+int btnStates[] = {0, 0, 0, 0, 0, 0};
 int diodePins[DIODES] = {7, 8, 9, 10, 11, 12};
 ezButton diodeBtns[] = {
+    ezButton(5),
     ezButton(7),
     ezButton(8),
     ezButton(9),
     ezButton(10),
-    ezButton(11),
-    ezButton(12)};
+    ezButton(11)};
+    
 void readDiodes()
 {
     for (int i = 0; i < DIODES; i++)
     {
         // read diode state
-        diodeStates[i] = diodeBtns[i].getState();
+        btnStates[i] = diodeBtns[i].getState();
     }
 }
-
+void sendJson()
+{
+    StaticJsonDocument<200> doc;
+    JsonArray data = doc.createNestedArray("buttons");
+    for (int i = 0; i < DIODES; i++)
+    {
+        data.add((int) btnStates[i]);
+    }
+    serializeJson(doc, Serial);
+}
 void setDiodes()
 {
-    for (int i = 0; i < NUMPIXELS; i++)
+    for (int i = 0; i < DIODES; i++)
     {
         if (diodeStates[i] == 1)
         {
-            pixels.setPixelColor(i, pixels.Color(255, 255, 255));
+            pixels.setPixelColor(2*i, pixels.Color(255, 0, 0));
         }
         else
         {
-            pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+            pixels.setPixelColor(2*i, pixels.Color(0, 255, 0));
         }
     }
     pixels.show();
+    sendJson();
 }
 
 void setup()
@@ -60,9 +70,8 @@ void setup()
     for (int i = 0; i < DIODES; i++)
     {
         diodeBtns[i].setDebounceTime(50);
+        // pixels.setPixelColor(2*i)
     }
-    // read the last state
-    //    readDiodes();
     Serial.begin(9600);
     while (!Serial)
         continue;
@@ -70,16 +79,7 @@ void setup()
     setDiodes();
 }
 
-void sendJson()
-{
-    StaticJsonDocument<200> doc;
-    JsonArray data = doc.createNestedArray("diodes");
-    for (int i = 0; i < DIODES; i++)
-    {
-        data.add(diodeStates[i]);
-    }
-    serializeJsonPretty(doc, Serial);
-}
+
 
 void readJson(StaticJsonDocument<200> doc)
 {
@@ -94,15 +94,31 @@ void readButtons()
 {
     for (byte i = 0; i < DIODES; i++)
     {
-        diodeStates[i] = diodeBtns[i].getState();
+        btnStates[i] = diodeBtns[i].getState(2);
     }
 }
+
 void loop()
 {
+    if (Serial.available() > 0)
+    {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, Serial);
+        // if (error)
+        // {
+            // Serial.print(F("deserializeJson() failed: "));
+            // Serial.println(error.c_str());
+            // return;
+        // }
+        readJson(doc);
+        setDiodes();
+        delay(TEST_DELAY);
+    }
+
     for (byte i = 0; i < DIODES; i++)
         diodeBtns[i].loop(); // MUST call the loop() function first
     readButtons();
-    setDiodes();
+    delay(TEST_DELAY);
     //   sendJson();
     //   delay(1000);
 }
