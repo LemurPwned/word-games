@@ -15,6 +15,8 @@ import asyncio
 import telegram
 from telegram import Bot
 from threading import Thread
+import playsound
+
 bot = Bot(os.environ["TOKEN"])
 
 async def bot_inform():
@@ -25,9 +27,10 @@ async def bot_inform():
 
 
 class Orlowski(GameInterface):
-    def __init__(self, port, baud_rate)  -> None:
+    def __init__(self, port, baud_rate, skip_calibrate = 0)  -> None:
         super().__init__(port, baud_rate=baud_rate)
         self.q = Queue()
+        self.skip_calibrate = skip_calibrate # by default no skip
         self.p = Thread(
                 target=self.calibration_run, args=(self.queue, ),
             )
@@ -39,7 +42,7 @@ class Orlowski(GameInterface):
         try:
             message = json.loads(message)
         except json.JSONDecodeError:
-            logger.error(message)
+            # logger.error(message)
             return 
         self.current_state = message['init']
         if (self.current_state):
@@ -61,7 +64,6 @@ class Orlowski(GameInterface):
             2: 'konsoli kalibracyjnej wspolczynnika Weissmana-Ponieckiego'
 
         }
-        game_no = 2
         logger.info(f"Game {game_no} launched")
         if game_no == 0:
             port = '/dev/ttyACM0'
@@ -83,7 +85,8 @@ class Orlowski(GameInterface):
 
 
     def launch_process(self, process):
-        process.run()
+        if not self.skip_calibrate:
+            process.run()
         logger.info("The user completed the calibration")
         self.launch_user_console()
         self.message_interface.send(json.dumps({
@@ -101,10 +104,10 @@ class Orlowski(GameInterface):
         loop.run_until_complete(coroutine)
 
     def launch_user_console(self):
-        user_input = input("Wprowadz zasob obliczeniowy. Zaloz zasobowi czepek zaslaniajac uszy i oczy\n. Nastepnie wprowadz polecenie i zatwierdz enterem\n")
+        user_input = input("Wprowadz zasob obliczeniowy. Zaloz zasobowi czepek zaslaniajac uszy i oczy.\nNastepnie wprowadz polecenie i zatwierdz enterem\n")
         self.bot_message_execute(user_input)
         print("Trwa inicjalizowanie. Nie usuwac zasobu obliczeniowego.")
-        sleep(0.1)
+        playsound.playsound("/home/orlowski/word-games/assets/dzwiek_aparatu_orlowskiego.mp3", block=True)
         print(f"Potwierdzenie wyslania polecenia {uuid.uuid4()}.")
         sleep(1)
         print(" Usunac zasob obliczeniowy.")
