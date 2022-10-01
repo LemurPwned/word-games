@@ -1,5 +1,6 @@
+import sys
+
 from word_games.embedded.main_process import Orlowski
-import sys 
 
 if __name__ == "__main__":
     try:
@@ -12,4 +13,3 @@ if __name__ == "__main__":
         port=port, baud_rate=br, skip_calibrate=skip_calibrate
     )
     interface.run()
- 

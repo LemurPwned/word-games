@@ -1,13 +1,15 @@
-from curses.panel import top_panel
 import logging
 import os
 import re
 import uuid
+from curses.panel import top_panel
+
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from .sp2400python import *
+
 load_dotenv()
 
 logging.basicConfig(
@@ -30,13 +32,13 @@ printer.sendCommand(printer.QUALITY_NLQ)
 printer.setFont(fonts["SANS SERIF"])
 
 logging.info(f"Setting port {port}")
-        
+
 CONST_SPACE = "\n\n\n\n\n\n\n\n\n\n\n\n"
 
 builder = Application.builder()
 builder.token(os.environ['TOKEN']).build()
 application = builder.build()
-counter = 1 
+counter = 1
 def escape_markdown( text):
     """
     Helper function to escape telegram markup symbols
@@ -46,20 +48,20 @@ def escape_markdown( text):
     return re.sub(r'([%s])' % escape_chars, r'\\\1', text)
 
 """
-Polecenie ma byc wysylane z komputera, 
-Polecenie i: 
-licznik z komputera. 
+Polecenie ma byc wysylane z komputera,
+Polecenie i:
+licznik z komputera.
 """
 
 async def wynik_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_says = " ".join(context.args)  
+    user_says = " ".join(context.args)
     if not user_says:
         await update.message.reply_text(escape_markdown(r"Wpisz komendę: `/wynik Nr: tresc wartosci`"),
         parse_mode='MarkdownV2')
         return
     await update.message.reply_text("Wysłano polecenie: " + user_says)
     # todo drukarka i inne rzeczy
-    # nr = 10 
+    # nr = 10
     tuuid = uuid.uuid4()
     to_print = f"Przetwarzanie polecenia zakonczone.\n\n"f"Kod odpowiedzi: ({tuuid})\n\n""Wartosc na wyjsciu modulu kognitywnego:\n"
     to_print += user_says + CONST_SPACE

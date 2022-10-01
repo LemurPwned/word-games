@@ -17,7 +17,7 @@ void setup()
     pinMode(RELAY_OUT, OUTPUT);
     pinMode(BTN, INPUT_PULLUP);
     digitalWrite(RELAY_OUT, HIGH);
-    
+
     Serial.begin(9600);
     while (!Serial)
         continue;

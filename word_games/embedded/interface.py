@@ -1,7 +1,9 @@
 import time
 from multiprocessing import Queue
-from .utils import logger_config
+
 import serial
+
+from .utils import logger_config
 
 logger = logger_config()
 
@@ -42,7 +44,7 @@ class MessageInterface:
                 # self.shared_queue.put(data)
             if self.interrupt:
                 # quit
-                return 
+                return
 
     def send(self, message):
         """

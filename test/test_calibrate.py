@@ -7,4 +7,3 @@ if __name__ == "__main__":
         port=port, baud_rate=br
     )
     interface.run()
- 

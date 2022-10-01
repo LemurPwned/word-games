@@ -26,7 +26,7 @@ ezButton diodeBtns[] = {
     ezButton(9),
     ezButton(10),
     ezButton(11)};
-    
+
 void readDiodes()
 {
     for (int i = 0; i < DIODES; i++)

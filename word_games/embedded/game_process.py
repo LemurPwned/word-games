@@ -1,7 +1,7 @@
 import json
 import math
-from queue import Queue
 import random
+from queue import Queue
 
 import numpy as np
 

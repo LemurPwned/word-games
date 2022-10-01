@@ -79,7 +79,7 @@ void setup()
     displayA.setSegments(data);
     displayB.setSegments(data);
     displayC.setSegments(data);
-    
+
     setProgress(15);
     displayNumber(10, displayA);
     displayNumber(892, displayB);
@@ -118,25 +118,25 @@ void readJson(StaticJsonDocument<200> doc)
         displayB.setSegments(SEG_DONE);
         displayC.setSegments(SEG_DONE);
         if (score < 15){
-          // fail 
+          // fail
             for (int i =0; i < NUMPIXELS; i ++){
-              pixelsA.setPixelColor(i, pixelsA.Color(255, 0, 0));     
-              pixelsB.setPixelColor(i, pixelsB.Color(255, 0, 0));     
-              pixelsC.setPixelColor(i, pixelsC.Color(255, 0, 0));             
+              pixelsA.setPixelColor(i, pixelsA.Color(255, 0, 0));
+              pixelsB.setPixelColor(i, pixelsB.Color(255, 0, 0));
+              pixelsC.setPixelColor(i, pixelsC.Color(255, 0, 0));
               pixelsA.show();
               pixelsB.show();
               pixelsC.show();
               delay(50);
             }
-          
+
         } else {
             for (int i =0; i < NUMPIXELS; i ++){
-              pixelsA.setPixelColor(i, pixelsA.Color(0, 255, 0));     
-              pixelsB.setPixelColor(i, pixelsB.Color(0, 255, 0));     
-              pixelsC.setPixelColor(i, pixelsC.Color(0, 255, 0)); 
+              pixelsA.setPixelColor(i, pixelsA.Color(0, 255, 0));
+              pixelsB.setPixelColor(i, pixelsB.Color(0, 255, 0));
+              pixelsC.setPixelColor(i, pixelsC.Color(0, 255, 0));
               pixelsA.show();
               pixelsB.show();
-              pixelsC.show();            
+              pixelsC.show();
               delay(50);
             }
         }
@@ -171,7 +171,7 @@ void setProgress(int progress)
         else
             pixelsC.setPixelColor(i, pixelsC.Color(255, 0, 0));
     }
-    pixelsC.show();  
+    pixelsC.show();
     // Serial.println("#START");
     // Serial.println(secondProgress);
     // Serial.println(thirdProgress);
@@ -198,7 +198,7 @@ void readSerial(){
             // Serial.println(error.c_str());
             // return;
         }
-        readJson(doc);    
+        readJson(doc);
     }
 }
 
@@ -217,7 +217,7 @@ void loop()
   for (byte i = 0; i < 3; i++){
     if (btns[i].isPressed()){
       // Serial.print(i);
-      // Serial.print("is pressed\n");      
+      // Serial.print("is pressed\n");
       sendJson(i);
       delay(TEST_DELAY);
     }

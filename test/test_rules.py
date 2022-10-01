@@ -1,6 +1,7 @@
+import json
+
 from word_games.embedded.game_process import CalibrateInterface, RuleInterface
 from word_games.embedded.interface import MessageInterface
-import json
 
 if __name__ == "__main__":
     port = '/dev/ttyACM0'

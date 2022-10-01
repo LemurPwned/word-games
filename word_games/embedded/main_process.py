@@ -1,21 +1,25 @@
-from multiprocessing.dummy import Process
-from .game_process import CalibrateInterface, GameInterface, DiodeInterface, RuleInterface
-from .utils import logger_config
-import random 
-import dotenv 
 import json
+import multiprocessing as mp
 import os
-import multiprocessing as mp 
-from time import sleep
+import random
+from multiprocessing.dummy import Process
 from queue import Queue
+from time import sleep
+
+import dotenv
+
+from .game_process import CalibrateInterface, DiodeInterface, GameInterface, RuleInterface
+from .utils import logger_config
+
 dotenv.load_dotenv()
 logger = logger_config()
-import uuid
 import asyncio
+import uuid
+from threading import Thread
+
+import playsound
 import telegram
 from telegram import Bot
-from threading import Thread
-import playsound
 
 bot = Bot(os.environ["TOKEN"])
 
@@ -43,7 +47,7 @@ class Orlowski(GameInterface):
             message = json.loads(message)
         except json.JSONDecodeError:
             # logger.error(message)
-            return 
+            return
         self.current_state = message['init']
         if (self.current_state):
             logger.info("Received init message, starting calibration")
@@ -56,7 +60,7 @@ class Orlowski(GameInterface):
 
     def calibration_run(self):
         br = 9600
-        # pick a random 
+        # pick a random
         game_no = random.randint(0, 2)
         game_names = {
             0: 'Ortopolarnej konsoli kalibracyjnej',
@@ -119,4 +123,3 @@ class Orlowski(GameInterface):
     def on_init(self):
         print("Zresetuj polozenie klucza w stacyjce startowej do pionu")
         logger.info("Initialisig listening")
-
