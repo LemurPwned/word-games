@@ -1,11 +1,11 @@
-from curses import baudrate
 import json
 import math
+from queue import Queue
 import random
 
 import numpy as np
 
-from ..orlovski.rules import DivisibleBy5Rule, EvenRule, OddRule, PowerOf2Rule
+from ..orlovski.rules import DivisibleBy5Rule, EvenRule, OddRule
 from .interface import MessageInterface
 from .utils import logger_config
 
@@ -16,6 +16,7 @@ class GameInterface:
         self.message_interface = MessageInterface(port=port,
             baud_rate=baud_rate,
             read_interval=0.1)
+        self.queue = Queue()
 
     def run(self):
         self.on_init()
@@ -32,14 +33,13 @@ class GameInterface:
         raise NotImplementedError
 
 class CalibrateInterface(GameInterface):
-    def __init__(self, port, baud_rate, grid_size= 30, step_size=  0.5, eps=5) -> None:
+    def __init__(self, port, baud_rate, grid_size= 30, eps=5) -> None:
         super().__init__(port, baud_rate=baud_rate)
         self.eps = eps
         self.max_distance = self.compute_distance(
             position=[0, 0, 0], target=[grid_size, grid_size, grid_size])
         self.min_distance = self.eps
         self.grid_size = grid_size
-        self.step_size = step_size
 
     def on_init(self):
         self.generate_target_position()
@@ -51,11 +51,12 @@ class CalibrateInterface(GameInterface):
         }))
 
     def on_win(self):
-        logger.info("Game won"  )
+        self.message_interface.interrupt = True
+
 
     def generate_target_position(self):
         min_distance = self.grid_size
-        max_distance = self.grid_size**2
+        max_distance = self.grid_size**3
         distance = np.random.randint(min_distance, max_distance)
         # generate a target
         self.target = [np.random.randint(0, self.grid_size) for _ in range(3)]
@@ -103,7 +104,6 @@ class CalibrateInterface(GameInterface):
         # normalise distance
         dst = (dst - self.min_distance) / (self.max_distance - self.min_distance)
         val = min(max(1 - dst, 0), 1)*100.
-        print(val)
         return val
 
 
@@ -118,13 +118,15 @@ class DiodeInterface(GameInterface):
         self.bias = bias
 
     def on_win(self):
-        logger.debug("WINN")
+        logger.debug("WIN DIODE")
         self.message_interface.send(json.dumps(
             {
                 "win": True,
                 "diodes": self.diodes
             }
         ))
+        self.message_interface.interrupt = True
+
 
     def generate_diode_states(self):
         diode_states = []
@@ -162,7 +164,7 @@ class DiodeInterface(GameInterface):
             self.prev_buttons = btn_states
             for k in (-1, 0, 1):
                 diode_id = changed_diode_id + k
-                if diode_id > 0 and diode_id < len(self.diode_states):
+                if diode_id >= 0 and diode_id < len(self.diode_states):
                     self.diode_states[diode_id] = (not self.diode_states[diode_id])
         logger.debug(f"DIODE STATES {self.diode_states}")
         if not any(self.diode_states):
@@ -208,6 +210,7 @@ class RuleInterface(GameInterface):
                 "score": self.score
             }
         ))
+        self.message_interface.interrupt = True
 
 
     def on_message(self, message):

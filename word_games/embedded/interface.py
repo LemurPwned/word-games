@@ -19,6 +19,7 @@ class MessageInterface:
         self.baud_rate = baud_rate
         self.read_interval = read_interval
         self.serial = serial.Serial(port=port, baudrate=baud_rate, write_timeout=1,  timeout=0.1)
+        self.interrupt = False
         if shared_queue is None:
             self.shared_queue = Queue()
         else:
@@ -39,7 +40,9 @@ class MessageInterface:
                     logger.debug(f"Chunk : {data_chunk}")
                     action_on_message(data_chunk.decode("utf-8"))
                 # self.shared_queue.put(data)
-
+            if self.interrupt:
+                # quit
+                return 
 
     def send(self, message):
         """

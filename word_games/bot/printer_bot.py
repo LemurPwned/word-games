@@ -53,7 +53,6 @@ licznik z komputera.
 
 async def wynik_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_says = " ".join(context.args)  
-    nr, user_says = user_says.split(":")
     if not user_says:
         await update.message.reply_text(escape_markdown(r"Wpisz komendę: `/wynik Nr: tresc wartosci`"),
         parse_mode='MarkdownV2')
@@ -62,7 +61,7 @@ async def wynik_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # todo drukarka i inne rzeczy
     # nr = 10 
     tuuid = uuid.uuid4()
-    to_print = f"Przetwarzanie polecenia nr {nr} zakonczone.\n\n"f"Kod odpowiedzi: ({tuuid})\n\n""Wartosc na wyjsciu modulu kognitywnego:\n"
+    to_print = f"Przetwarzanie polecenia zakonczone.\n\n"f"Kod odpowiedzi: ({tuuid})\n\n""Wartosc na wyjsciu modulu kognitywnego:\n"
     to_print += user_says + CONST_SPACE
 
     printer.printLine(to_print)
